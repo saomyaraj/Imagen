@@ -7,7 +7,7 @@ import 'package:image/image.dart' as img;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tflite_flutter_plus/tflite_flutter_plus.dart';
-import 'dart:typed_data'; // Import this for Float32List
+import 'dart:typed_data';
 
 void main() {
   runApp(const MyApp());
@@ -91,31 +91,130 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100], // Light background
       appBar: AppBar(
-        title: const Text('Image Processor'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        title: Text('Image Enhancement',
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            _image == null
-                ? const Text('No image selected.')
-                : Image.file(_image!),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: getImage,
-              child: const Text('Select Image'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: processImage,
-              child: const Text('Process Image'),
-            ),
-            const SizedBox(height: 20),
-            _processedImage == null
-                ? Container()
-                : Image.file(_processedImage!),
-          ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: <Widget>[
+              _image == null
+                  ? Container(
+                height: 300,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add_photo_alternate_outlined,
+                        size: 50,
+                        color: Colors.grey[400]
+                    ),
+                    SizedBox(height: 10),
+                    Text('Select an image to enhance',
+                      style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16
+                      ),
+                    )
+                  ],
+                ),
+              )
+                  : Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Image.file(_image!),
+                ),
+              ),
+              SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.add_photo_alternate),
+                    label: Text('Select Image'),
+                    onPressed: getImage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.auto_fix_high),
+                    label: Text('Enhance'),
+                    onPressed: _image == null ? null : processImage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 24),
+              if (_processedImage != null) ...[
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: Image.file(_processedImage!),
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text('Enhanced Image',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[800]
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -169,7 +268,6 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
   Future<void> processImage() async {
     if (_image == null) return;
 
-    // Check if the model is loaded before processing
     if (!_isModelLoaded) {
       if (kDebugMode) {
         print('Interpreter is not initialized yet.');
@@ -186,7 +284,6 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
         return;
       }
 
-      // Resize image to 256x256 and normalize to [0, 1]
       image = img.copyResize(image, width: 256, height: 256);
       var inputImage = Float32List(3 * 256 * 256);
 
