@@ -114,6 +114,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-- **Developer**: [Your Name](https://github.com/saomyaraj)
+- **Developer**: [Saomyaraj Jha](https://github.com/saomyaraj)
 - **Email**: <saomyaraj.dev@google.com>
 - **GitHub**: [https://github.com/saomyaraj](https://github.com/saomyaraj)
