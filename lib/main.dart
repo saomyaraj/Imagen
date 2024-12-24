@@ -6,7 +6,6 @@ import 'package:tflite_flutter/tflite_flutter.dart' as tflite;
 import 'package:image/image.dart' as img;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:tflite_flutter_plus/tflite_flutter_plus.dart';
 import 'dart:typed_data';
 
 void main() {
@@ -50,6 +49,10 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
   }
 
   Future<void> requestPermissions() async {
+    if (await Permission.camera.isGranted && await Permission.storage.isGranted) {
+      return; // Permissions are already granted
+    }
+
     Map<Permission, PermissionStatus> statuses = await [
       Permission.camera,
       Permission.storage,
@@ -59,7 +62,24 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
     if (statuses[Permission.camera] != PermissionStatus.granted ||
         statuses[Permission.storage] != PermissionStatus.granted ||
         statuses[Permission.photos] != PermissionStatus.granted) {
-      openAppSettings();
+      // Show an alert to the user indicating that permissions are necessary
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Permissions Required'),
+          content: const Text(
+              'Please grant camera and storage permissions in the settings to use this app.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                openAppSettings();
+              },
+              child: const Text('Go to Settings'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -91,11 +111,12 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Light background
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
-        title: Text('Image Enhancement',
+        title: const Text(
+          'Image Enhancement',
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
@@ -117,7 +138,7 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
                       color: Colors.grey.withOpacity(0.2),
                       spreadRadius: 2,
                       blurRadius: 5,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -125,15 +146,11 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.add_photo_alternate_outlined,
-                        size: 50,
-                        color: Colors.grey[400]
-                    ),
-                    SizedBox(height: 10),
-                    Text('Select an image to enhance',
-                      style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 16
-                      ),
+                        size: 50, color: Colors.grey[400]),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Select an image to enhance',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
                     )
                   ],
                 ),
@@ -146,7 +163,7 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
                       color: Colors.grey.withOpacity(0.2),
                       spreadRadius: 2,
                       blurRadius: 5,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -155,29 +172,29 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
                   child: Image.file(_image!),
                 ),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
-                    icon: Icon(Icons.add_photo_alternate),
-                    label: Text('Select Image'),
+                    icon: const Icon(Icons.add_photo_alternate),
+                    label: const Text('Select Image'),
                     onPressed: getImage,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
                   ),
                   ElevatedButton.icon(
-                    icon: Icon(Icons.auto_fix_high),
-                    label: Text('Enhance'),
+                    icon: const Icon(Icons.auto_fix_high),
+                    label: const Text('Enhance'),
                     onPressed: _image == null ? null : processImage,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -185,7 +202,7 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               if (_processedImage != null) ...[
                 Container(
                   decoration: BoxDecoration(
@@ -195,7 +212,7 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
                         color: Colors.grey.withOpacity(0.2),
                         spreadRadius: 2,
                         blurRadius: 5,
-                        offset: Offset(0, 3),
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
@@ -204,13 +221,11 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
                     child: Image.file(_processedImage!),
                   ),
                 ),
-                SizedBox(height: 16),
-                Text('Enhanced Image',
+                const SizedBox(height: 16),
+                Text(
+                  'Enhanced Image',
                   style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[800]
-                  ),
+                      fontSize: 18, fontWeight: FontWeight.w500, color: Colors.grey[800]),
                 ),
               ],
             ],
@@ -221,8 +236,6 @@ class _ImageProcessorPageState extends State<ImageProcessorPage> {
   }
 
   Future getImage() async {
-    await requestPermissions();
-
     final ImageSource? source = await _chooseImageSource(context);
     if (source == null) return;
 
